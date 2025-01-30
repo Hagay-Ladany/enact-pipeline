@@ -6,9 +6,9 @@ paths:
   visiumhd_h5_path: "/home/oneai/enact-pipeline/ENACT_supporting_files/public_data/human_colorectal/input_files/filtered_feature_bc_matrix.h5"
   tissue_positions_path: "/home/oneai/enact-pipeline/ENACT_supporting_files/public_data/human_colorectal/input_files/tissue_positions.parquet"
 steps:
-  segmentation: True # True if you want to run segmentation
-  bin_to_geodataframes: True # True to convert bin to geodataframes
-  bin_to_cell_assignment: True # True to assign cells to bins
+  segmentation: False # True if you want to run segmentation
+  bin_to_geodataframes: False # True to convert bin to geodataframes
+  bin_to_cell_assignment: False # True to assign cells to bins
   cell_type_annotation: True # True to run cell type annotation
 params:
   seg_method: "stardist" # Stardist is the only option for now
@@ -16,7 +16,7 @@ params:
   expand_by_nbins: 2 # Number of bins to expand the nuclei by to get cell boundaries
   patch_size: 4000 # Defines the patch size. The whole resolution image will be broken into patches of this size
   bin_representation: "polygon"  # or point TODO: Remove support for anything else
-  bin_to_cell_method: "weighted_by_area" # or naive/ weighted_by_cluster/ weighted_by_gene
+  bin_to_cell_method: "weighted_by_cluster" # or naive/ weighted_by_cluster/ weighted_by_gene
   cell_annotation_method: "celltypist"
   cell_typist_model: "Human_Colorectal_Cancer.pkl" # only needed if using  cell_annotation_method = "celltypist"
   use_hvg: True # Only run analysis on highly variable genes + cell markers specified

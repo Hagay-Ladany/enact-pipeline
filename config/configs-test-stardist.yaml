@@ -7,8 +7,8 @@ paths:
   visiumhd_h5_path: "/home/oneai/wsis/counts files/human_breast_if_counts/square_002um/filtered_feature_bc_matrix.h5"
   tissue_positions_path: "/home/oneai/wsis/counts files/human_breast_if_counts/square_002um/spatial/tissue_positions.parquet"
 steps:
-  segmentation: True # True if you want to run segmentation
-  bin_to_geodataframes: True # True to convert bin to geodataframes
+  segmentation: False # True if you want to run segmentation
+  bin_to_geodataframes: False # True to convert bin to geodataframes
   bin_to_cell_assignment: True # True to assign cells to bins
   cell_type_annotation: True # True to run cell type annotation
 params:

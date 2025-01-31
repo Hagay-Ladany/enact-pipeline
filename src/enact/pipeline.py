@@ -669,6 +669,8 @@ class ENACT:
             hvg_mask = hvg_mask.copy()
             hvg_mask.loc[gene_list] = True
             adata = adata[:, hvg_mask]
+        adata.obs_names_make_unique()
+        adata.var_names_make_unique()
         return adata, bin_size
 
     def generate_bin_polys(self, bins_df, x_col, y_col, bin_size):

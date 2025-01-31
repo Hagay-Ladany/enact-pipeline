@@ -21,7 +21,6 @@ class CellAssignPipeline(ENACT):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.configs = configs
 
     def format_markers_to_df(self):
         """Method to format marker genes to a pandas dataframe

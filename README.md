@@ -223,6 +223,7 @@ ENACT users can choose to specify the configurations via one of two ways:
       cell_annotation_method: "celltypist"                      <---- cell annotation method. Pick one of ["cellassign", "celltypist"]
       cell_typist_model: "Human_Colorectal_Cancer.pkl"          <---- CellTypist model weights to use. Update based on organ of interest if cell_annotation_method is set to "celltypist"
       seg_method: "stardist"                                    <---- cell segmentation method. Stardist is the only option for now
+      image_type: "if"                                          <---- image type. Options are ["he", "if"] (for H&E image or IF image, respectively.) 
       nucleus_expansion: True                                   <---- flag to enable nuclei expansion to get cell boundaries. Default is True.
       expand_by_nbins: 2                                        <---- number of bins to expand the nuclei by to get cell boundaries. Default is 2 bins.
       patch_size: 4000                                          <---- defines the patch size. The whole resolution image will be broken into patches of this size. Reduce if you run into memory issues
@@ -238,6 +239,8 @@ ENACT users can choose to specify the configurations via one of two ways:
       min_overlap: 128                                          <---- overlap between blocks, should it be larger than the size of a cell
       context: 128                                              <---- context pixels around the blocks to be included during prediction
       n_tiles: (4,4,1)                                          <---- the input image is broken up into (overlapping) tiles that are processed independently and re-assembled. This parameter denotes a tuple of the number of tiles for every image axis
+      stardist_modelname: "2D_versatile_fluo"                   <---- Specify one of the available Stardist models. 2D_versatile_fluo (for IF images) or 2D_versatile_he (for H&E images)
+      channel_to_segment: 2                                     <---- Only applicable for IF images. This is the image channel to segment (usually the DAPI channel)
   cell_markers:                                                 <---- cell-gene markers to use for cell annotation. Only applicable if params/cell_annotation_method is "cellassign" or "sargent". No need to specify for "CellTypist"
       Epithelial: ["CDH1","EPCAM","CLDN1","CD2"]
       Enterocytes: ["CD55", "ELF3", "PLIN2", "GSTM3", "KLF5", "CBR1", "APOA1", "CA1", "PDHA1", "EHF"]
@@ -329,6 +332,7 @@ steps:
   cell_type_annotation: True # True to run cell type annotation
 params:
   seg_method: "stardist" # Stardist is the only option for now
+  image_type: "if" # Image type: Options: ["he", "if"] (for H&E image or IF image, respectively.) 
   nucleus_expansion: True # Flag to enable nuclei expansion to get cell boundaries
   expand_by_nbins: 2 # Number of bins to expand the nuclei by to get cell boundaries
   patch_size: 4000 # Defines the patch size. The whole resolution image will be broken into patches of this size
@@ -348,6 +352,8 @@ stardist:
   min_overlap: 128 # overlap between blocks, should it be larger than the size of a cell
   context: 128 # context pixels around the blocks to be included during prediction
   n_tiles: (4,4,1) #the input image is broken up into (overlapping) tiles that are processed independently and re-assembled. This parameter denotes a tuple of the number of tiles for every image axis
+  stardist_modelname: "2D_versatile_fluo" # Specify one of the available Stardist models: 2D_versatile_fluo (for IF images) or 2D_versatile_he (for H&E images)
+  channel_to_segment: 2 # Only applicable for IF images. This is the image channel to segment (usually the DAPI channel)
 cell_markers: # Only needed if cell_annotation_method is one of "Sargent" or "CellAssign"
   # Human Colon
   Epithelial: ["CDH1","EPCAM","CLDN1","CD2"]

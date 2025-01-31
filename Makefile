@@ -4,7 +4,8 @@ PY_ENV_NAME := enact_py_env
 
 PY_ENV_PATH := $(ENV_DIR)$(PY_ENV_NAME)
 
-CONFIG_PATH ?= config/configs.yaml
+# CONFIG_PATH ?= config/configs.yaml
+CONFIG_PATH ?= config/configs-test-stardist.yaml
 
 create-env:
 	conda create --prefix $(PY_ENV_PATH) python=3.10

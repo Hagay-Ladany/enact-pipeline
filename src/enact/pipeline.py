@@ -47,6 +47,7 @@ class ENACT:
         tissue_positions_path="",
         analysis_name="enact_demo",
         seg_method="stardist",
+        image_type="he",
         nucleus_expansion=True,
         expand_by_nbins=2,
         patch_size=4000,
@@ -70,6 +71,8 @@ class ENACT:
         min_overlap=28,
         context=128,
         n_tiles=(4,4,1),
+        stardist_modelname="2D_versatile_he",
+        channel_to_segment=2,
         cell_markers={},
         chunks_to_run=[],
         configs_dict={},
@@ -91,6 +94,8 @@ class ENACT:
                 results. Default is "enact_demo".
             seg_method (str): Cell segmentation method. Default is "stardist". 
                 Options: ["stardist"].
+            image_type (str): Specify if image is H&E (he) or IF(if) image. Default is "he". 
+                Options: ["he", "if"].
             patch_size (int): Size of patches (in pixels) to process the image. Use a 
                 smaller patch size to reduce memory requirements. Default is 4000.
             use_hvg (bool): Whether to use highly variable genes (HVG) during the 
@@ -133,6 +138,11 @@ class ENACT:
                 included during prediction
             n_tiles (iterable): stardist parameter, This parameter denotes a tuple of 
                 the number of tiles for every image axis
+            stardist_modelname(str): Name or Path to the pre-trained Stardist model for image segmentation. 
+                Refer to https://github.com/stardist/stardist?tab=readme-ov-file#pretrained-models-for-2d for a full 
+                list of models. Default is "2D_versatile_he".
+            channel_to_segment(int): Only applicable for IF images. This is the image channel to segment 
+                (usually the DAPI channel). Default is 2.
             cell_markers (dict): A dictionary of cell markers used for annotation. Only 
                 used if `cell_annotation_method` is one of ["sargent", "cellassign"].
             chunks_to_run (list): Specific chunks of data to run the analysis on for 
@@ -163,6 +173,7 @@ class ENACT:
             },
             "params": {
                 "seg_method": seg_method,
+                "image_type": image_type,
                 "nucleus_expansion": nucleus_expansion,
                 "expand_by_nbins": expand_by_nbins,
                 "patch_size": patch_size,
@@ -184,6 +195,8 @@ class ENACT:
                 "min_overlap": min_overlap,
                 "context": context,
                 "n_tiles": n_tiles,
+                "stardist_modelname": stardist_modelname,
+                "channel_to_segment": channel_to_segment
             },
             
             "cell_markers": cell_markers,
@@ -287,7 +300,12 @@ class ENACT:
         img_arr = tifi.imread(file_path)
         crop_bounds = self.get_image_crop_bounds()
         x_min, y_min, x_max, y_max = crop_bounds
-        img_arr = img_arr[y_min:y_max, x_min:x_max, :]
+        if self.image_type == "he":
+            # H&E images have a shape: (height, width, # channels)
+            img_arr = img_arr[y_min:y_max, x_min:x_max, :]
+        else:
+            # IF images have a different shape: (# channels, height, width)
+            img_arr = img_arr[self.channel_to_segment, y_min:y_max, x_min:x_max]
         self.logger.info("<load_image> Successfully loaded image!")
         return img_arr, crop_bounds
 
@@ -347,20 +365,26 @@ class ENACT:
         if self.seg_method == "stardist":
             # Adjust nms_thresh and prob_thresh as needed
             # ssl._create_default_https_context = ssl._create_unverified_context
-            self.stardist_model = StarDist2D.from_pretrained("2D_versatile_he")
+            self.stardist_model = StarDist2D.from_pretrained(self.stardist_modelname)
             if isinstance(self.n_tiles, str):
                 n_tiles = ast.literal_eval(self.n_tiles)  # Evaluate if it's a string
             else:
                 n_tiles = self.n_tiles  # Use it as-is if it's not a string
+            if self.image_type == "if":
+                # IF using an IF image, pick a channel for segmentation. Usually the DAPI channel.
+                n_tiles = n_tiles[:2]
+                axes = "YX"
+            else:
+                axes = "YXC"
             labels, polys = self.stardist_model.predict_instances_big(
                 image,
-                axes="YXC",
+                axes=axes,
                 block_size=self.block_size,
                 prob_thresh=self.prob_thresh,
                 nms_thresh=self.overlap_thresh,
                 min_overlap=self.min_overlap,
                 context=self.context,
-                n_tiles = n_tiles,
+                n_tiles=n_tiles,
                 normalizer=None
             )
             self.logger.info("<run_segmentation> Successfully segmented cells!")

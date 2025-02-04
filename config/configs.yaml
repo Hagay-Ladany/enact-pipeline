@@ -17,7 +17,7 @@ params:
   expand_by_nbins: 2 # Number of bins to expand the nuclei by to get cell boundaries
   patch_size: 4000 # Defines the patch size. The whole resolution image will be broken into patches of this size
   bin_representation: "polygon"  # or point TODO: Remove support for anything else
-  bin_to_cell_method: "weighted_by_cluster" # or naive/ weighted_by_cluster/ weighted_by_gene
+  bin_to_cell_method: "weighted_by_area" # or naive/ weighted_by_cluster/ weighted_by_gene
   cell_annotation_method: "celltypist"
   cell_typist_model: "Human_Colorectal_Cancer.pkl" # only needed if using  cell_annotation_method = "celltypist"
   use_hvg: True # Only run analysis on highly variable genes + cell markers specified

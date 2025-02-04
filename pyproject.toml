@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
  
 [project]
 name = "enact-SO"
-version = "0.2.1"
+version = "0.2.2"
 description = "ENACT is a self-contained pipeline designed to streamline Visium HD analysis from cell segmentation to annotation, enabling integration with advanced spatial analysis tools."
 license ={ file = "LICENSE.md" }
 readme = "README.md"

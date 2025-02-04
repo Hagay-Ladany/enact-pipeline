@@ -154,7 +154,7 @@ class ENACT:
                 convenience and consistency. Default is an empty dictionary (i.e., 
                 using the parameters defined in the class constructor).
         """
-  
+
         # Todo: add class documentation
         user_configs = {
             "analysis_name": analysis_name,
@@ -300,12 +300,12 @@ class ENACT:
         img_arr = tifi.imread(file_path)
         crop_bounds = self.get_image_crop_bounds()
         x_min, y_min, x_max, y_max = crop_bounds
-        if self.image_type == "he":
-            # H&E images have a shape: (height, width, # channels)
-            img_arr = img_arr[y_min:y_max, x_min:x_max, :]
-        else:
+        if self.image_type == "if":
             # IF images have a different shape: (# channels, height, width)
             img_arr = img_arr[self.channel_to_segment, y_min:y_max, x_min:x_max]
+        else:
+            # H&E images have a shape: (height, width, # channels)
+            img_arr = img_arr[y_min:y_max, x_min:x_max, :]
         self.logger.info("<load_image> Successfully loaded image!")
         return img_arr, crop_bounds
 
@@ -366,6 +366,12 @@ class ENACT:
             # Adjust nms_thresh and prob_thresh as needed
             # ssl._create_default_https_context = ssl._create_unverified_context
             self.stardist_model = StarDist2D.from_pretrained(self.stardist_modelname)
+            if self.stardist_modelname=="2D_versatile_he" and self.image_type!="he":
+                self.logger.warning(
+                    f"<segment_cells> User requested using {self.stardist_modelname} on an IF image."
+                    " This may not lead to good segmentation performance. Please consider setting "
+                    "'stardist_modelname' to '2D_versatile_fluo' for IF images."
+                )
             if isinstance(self.n_tiles, str):
                 n_tiles = ast.literal_eval(self.n_tiles)  # Evaluate if it's a string
             else:
@@ -565,7 +571,7 @@ class ENACT:
         # )
         self.logger.info(f"<destripe> Successfully ran destripe normalization")
         return adata_scaled
-    
+
     def get_bin_size(self):
         """Gets the bin size
         Returns:
@@ -799,7 +805,7 @@ class ENACT:
 
             if chunk in [".ipynb_checkpoints"]:
                 continue
-            
+
             # Loading the cells geodataframe
             cell_gdf_chunk_path = os.path.join(self.cell_chunks_dir, chunk)
             cell_gdf_chunk = gpd.GeoDataFrame(pd.read_csv(cell_gdf_chunk_path))
@@ -1262,11 +1268,11 @@ class ENACT:
         """
         # Initialize an empty mask
         cells_mask = np.zeros(wsi_shape, dtype=np.uint8)
-        
+
         # Create a PIL image and draw object
         pil_image = Image.fromarray(cells_mask)
         draw = ImageDraw.Draw(pil_image)
-        
+
         # Iterate over polygons and draw them
         for poly in cells_gdf["geometry"].tolist():
             if poly is None:
@@ -1321,7 +1327,7 @@ class ENACT:
                     )
                     # Save results to disk
                     cells_gdf.to_csv(self.cells_df_path)
-                
+
                 # Saving segmentation as a .png
                 self.convert_stardist_output_to_image(
                     wsi_shape=wsi.shape, cells_gdf=cells_gdf

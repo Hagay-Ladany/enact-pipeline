@@ -12,6 +12,7 @@ steps:
   cell_type_annotation: True # True to run cell type annotation
 params:
   seg_method: "stardist" # Stardist is the only option for now
+  image_type: "he" # Image type: Options: ["he", "if"] (for H&E image or IF image, respectively.) 
   nucleus_expansion: True # Flag to enable nuclei expansion to get cell boundaries
   expand_by_nbins: 2 # Number of bins to expand the nuclei by to get cell boundaries
   patch_size: 4000 # Defines the patch size. The whole resolution image will be broken into patches of this size
@@ -32,7 +33,8 @@ stardist:
   min_overlap: 128 # overlap between blocks, should it be larger than the size of a cell
   context: 128 # context pixels around the blocks to be included during prediction
   n_tiles: (4,4,1) # the input image is broken up into (overlapping) tiles that are processed independently and re-assembled. This parameter denotes a tuple of the number of tiles for every image axis
-
+  stardist_modelname: "2D_versatile_he" # Specify one of the available Stardist models: 2D_versatile_fluo (for IF images) or 2D_versatile_he (for H&E images)
+  channel_to_segment: 2 # Only applicable for IF images. This is the image channel to segment (usually the DAPI channel)
 cell_markers:
   # Human Colon
   Epithelial: ["CDH1","EPCAM","CLDN1","CD2"]

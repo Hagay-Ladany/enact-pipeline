@@ -8,6 +8,8 @@ import shutil
 import anndata
 import pandas as pd
 from PIL import Image
+import numpy as np
+from scipy.sparse import csr_matrix
 
 # import squidpy as sq
 
@@ -108,13 +110,19 @@ class PackageResults(ENACT):
         results_df = results_df.set_index("id")
         results_df["num_transcripts"] = results_df["num_transcripts"].fillna(0)
         results_df["cell_type"] = results_df["cell_type"].str.lower()
-        adata = anndata.AnnData(cell_by_gene_df.set_index("id").astype(int))
-        adata.obsm["spatial"] = results_df[spatial_cols].astype(int)
-        adata.obsm["stats"] = results_df[stat_columns].astype(int)
+        adata = anndata.AnnData(cell_by_gene_df.set_index("id"))
+        adata.obs = adata.obs.merge(results_df, on="id").drop_duplicates(keep='first')
+
+        adata.obsm["spatial"] = adata.obs[spatial_cols].astype(int)
+        adata.obsm["stats"] = adata.obs[stat_columns].astype(int)
         
         # This column is the output of cell type inference pipeline
-        adata.obs["cell_type"] = results_df[["cell_type"]].astype("category")
-        adata.obs["patch_id"] = results_df[["chunk_name"]]
+        adata.obs["cell_type"] = adata.obs[["cell_type"]].astype("category")
+        adata.obs["patch_id"] = adata.obs[["chunk_name"]]
+        adata.obs = adata.obs[["cell_type", "patch_id"]]
+
+        # Converting the Anndata cell transcript counts to sparse format for more efficient storage
+        adata.X = csr_matrix(adata.X).astype(np.float32)
         return adata
 
     def create_tmap_file(self):

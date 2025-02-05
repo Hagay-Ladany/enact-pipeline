@@ -114,7 +114,7 @@ def weight_by_cluster_assignment(
     data_scaled = scaler.fit_transform(gene_counts_non_overlap[gene_columns])
 
     # Apply PCA for dimensionality reduction
-    n_pcs = 250
+    n_pcs = np.min([data_scaled.shape[0], data_scaled.shape[1], n_pcs])
     pca = PCA(n_components=n_pcs)
     data_pca = pca.fit_transform(data_scaled)
 

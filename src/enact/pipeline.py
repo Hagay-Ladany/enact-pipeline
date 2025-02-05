@@ -366,10 +366,10 @@ class ENACT:
             # Adjust nms_thresh and prob_thresh as needed
             # ssl._create_default_https_context = ssl._create_unverified_context
             self.stardist_model = StarDist2D.from_pretrained(self.stardist_modelname)
-            if self.stardist_modelname=="2D_versatile_he" and self.image_type!="he":
+            if self.stardist_modelname=="2D_versatile_he" and self.image_type=="if":
                 self.logger.warning(
                     f"<segment_cells> User requested using {self.stardist_modelname} on an IF image."
-                    " This may not lead to good segmentation performance. Please consider setting "
+                    " This may lead to poor segmentation performance. Please consider setting "
                     "'stardist_modelname' to '2D_versatile_fluo' for IF images."
                 )
             if isinstance(self.n_tiles, str):

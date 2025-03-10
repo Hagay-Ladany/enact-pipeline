@@ -23,7 +23,7 @@ class CellTypistPipeline(ENACT):
 
     def run_cell_typist(self):
         """Runs CellTypist"""
-        bin_assign_df = self.merge_files(self.bin_assign_dir, save=False)
+        bin_assign_results = self.merge_files_sparse(self.bin_assign_dir)
         cell_lookup_df = self.merge_files(self.cell_ix_lookup_dir, save=False)
 
         spatial_cols = ["cell_x", "cell_y"]
@@ -32,14 +32,12 @@ class CellTypistPipeline(ENACT):
         cell_lookup_df = cell_lookup_df.set_index("id")
         cell_lookup_df["num_transcripts"] = cell_lookup_df["num_transcripts"].fillna(0)
 
-        bin_assign_df.index = cell_lookup_df.index
-        bin_assign_df = bin_assign_df.drop(columns=["Unnamed: 0"])
-        bin_assign_df = bin_assign_df.fillna(0).astype(int)
-        adata = anndata.AnnData(bin_assign_df.astype(int))
+        bin_assign_result_sparse, gene_columns = bin_assign_results
+        adata = anndata.AnnData(X=bin_assign_result_sparse, obs=cell_lookup_df.copy())
+        adata.var_names = gene_columns
 
         adata.obsm["spatial"] = cell_lookup_df[spatial_cols].astype(int)
         adata.obsm["stats"] = cell_lookup_df[stat_columns].astype(int)
-        adata.obs
 
         lib_size = adata.X.sum(1)
         adata.obs["size_factor"] = lib_size / np.mean(lib_size)

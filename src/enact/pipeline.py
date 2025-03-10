@@ -800,21 +800,23 @@ class ENACT:
             f"<assign_bins_to_cells> Assigning bins to cells using {self.bin_to_cell_method} method"
         )
         for chunk in tqdm(chunk_list, total=len(chunk_list)):
-            if os.path.exists(os.path.join(self.bin_assign_dir, chunk)):
+            bin_to_cell_chunk_path = os.path.join(self.bin_assign_dir, chunk)
+            if os.path.exists(bin_to_cell_chunk_path) or chunk in {".ipynb_checkpoints"}:
                 continue
 
-            if chunk in [".ipynb_checkpoints"]:
+            bin_gdf_chunk_path = os.path.join(self.bin_chunks_dir, chunk)
+            cell_gdf_chunk_path = os.path.join(self.cell_chunks_dir, chunk)
+
+            if not (os.path.exists(bin_gdf_chunk_path) and os.path.exists(cell_gdf_chunk_path)):
                 continue
 
             # Loading the cells geodataframe
-            cell_gdf_chunk_path = os.path.join(self.cell_chunks_dir, chunk)
             cell_gdf_chunk = gpd.GeoDataFrame(pd.read_csv(cell_gdf_chunk_path))
             cell_gdf_chunk = cell_gdf_chunk[~cell_gdf_chunk["geometry"].isna()]
             cell_gdf_chunk["geometry"] = cell_gdf_chunk["geometry"].apply(wkt.loads)
             cell_gdf_chunk = gpd.GeoDataFrame(cell_gdf_chunk, geometry="geometry")
 
             # Loading the bins geodataframe
-            bin_gdf_chunk_path = os.path.join(self.bin_chunks_dir, chunk)
             bin_gdf_chunk = gpd.GeoDataFrame(pd.read_csv(bin_gdf_chunk_path))
             bin_gdf_chunk["geometry"] = bin_gdf_chunk["geometry"].apply(wkt.loads)
             bin_gdf_chunk.set_geometry("geometry", inplace=True)
@@ -1149,6 +1151,47 @@ class ENACT:
             self.logger.info(
                 f"{self.bin_to_cell_method} mean count per cell: {index_lookup_df['num_transcripts'].mean()}"
             )
+
+    def merge_files_sparse(self, input_folder):
+        """
+        
+        For the large bin assignment directory (self.bin_assign_dir),
+        this method loads each CSV as a sparse matrix to avoid creating a giant dense DataFrame.
+        
+        Args:
+            input_folder (str): Directory path containing the CSV files.
+        
+        Returns:
+            If directory equals self.bin_assign_dir:
+                tuple: (X_sparse, gene_columns)
+                    - X_sparse: a scipy.sparse.csr_matrix with stacked count data.
+                    - gene_columns: list of gene names corresponding to the matrix columns.
+            Otherwise:
+                pd.DataFrame: the merged DataFrame.
+        """
+        if self.configs["params"]["chunks_to_run"]:
+            chunk_list = self.configs["params"]["chunks_to_run"]
+        else:
+            chunk_list = os.listdir(input_folder)
+        # For the large count files, load each as sparse.
+        sparse_list = []
+        gene_columns = []
+        for filename in chunk_list:
+            if filename in ["annotated.csv", ".ipynb_checkpoints"]:
+                continue
+            # Read each .csv file and append it to the list
+            file_path = os.path.join(input_folder, filename)
+            df = pd.read_csv(file_path)
+            if "Unnamed: 0" in df.columns:
+                df = df.drop(columns=["Unnamed: 0"])
+            if gene_columns == []:
+                gene_columns = df.columns.tolist()
+            df = df.fillna(0).astype(int)
+            # Convert to a sparse matrix and append.
+            sparse_list.append(sparse.csr_matrix(df.values).astype(np.float32))
+        # Vertically stack the sparse matrices.
+        X_sparse = sparse.vstack(sparse_list)
+        return (X_sparse, gene_columns)
 
     def merge_files(
         self, input_folder, output_file_name="merged_results.csv", save=True

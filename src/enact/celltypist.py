@@ -8,7 +8,6 @@ import scanpy as sc
 import seaborn as sns
 import numpy as np
 
-## Attempt to import celltypist, and prompt installation if not found
 import celltypist
 from celltypist import models
 
@@ -43,30 +42,43 @@ class CellTypistPipeline(ENACT):
         adata.obs["size_factor"] = lib_size / np.mean(lib_size)
         adata.obs["lib_size"] = lib_size
 
-        #  normalize adata to the log1p normalised format (to 10,000 counts per cell)
+        # Normalize data: scale to 10,000 counts per cell and log-transform.
         sc.pp.normalize_total(adata, target_sum=1e4)
         sc.pp.log1p(adata)
 
-        # download celltypist model and predict cell type
+        # Ensure the model filename ends with ".pkl"
         if ".pkl" not in self.cell_typist_model:
             self.cell_typist_model = self.cell_typist_model + ".pkl"
-        models.download_models(model=self.cell_typist_model)
-        predictions = celltypist.annotate(adata, model=self.cell_typist_model)
-        adata = predictions.to_adata(
-            insert_labels=True, insert_conf=True, insert_prob=True
-        )
+
+        # If the model file exists locally, load it; otherwise, download it.
+        if os.path.isfile(self.cell_typist_model):
+            try:
+                model_obj = models.Model.load(self.cell_typist_model)
+                self.logger.info(f"✅ Loaded local CellTypist model from {self.cell_typist_model}")
+            except Exception as e:
+                self.logger.error(f"🛑 Failed to load local model from {self.cell_typist_model}: {e}")
+                raise
+        else:
+            try:
+                models.download_models(model=self.cell_typist_model)
+                model_obj = models.Model.load(self.cell_typist_model)
+                self.logger.info(f"✅ Downloaded and loaded model {self.cell_typist_model}")
+            except Exception as e:
+                self.logger.error(f"🛑 Failed to download model {self.cell_typist_model}: {e}")
+                raise
+
+        # Run annotation
+        predictions = celltypist.annotate(adata, model=model_obj)
+        adata = predictions.to_adata(insert_labels=True, insert_conf=True, insert_prob=True)
 
         adata.obs.rename(columns={"predicted_labels": "cell_type"}, inplace=True)
         adata.obs[adata.obsm["spatial"].columns] = adata.obsm["spatial"]
         adata.obs[adata.obsm["stats"].columns] = adata.obsm["stats"]
         adata.obs["chunk_name"] = cell_lookup_df["chunk_name"]
         results_df = adata.obs.drop(columns=adata.obs["cell_type"].unique().tolist())
-        results_df.to_csv(
-            os.path.join(self.cellannotation_results_dir, "merged_results.csv")
-        )
+        results_df.to_csv(os.path.join(self.cellannotation_results_dir, "merged_results.csv"))
 
 
 if __name__ == "__main__":
-    # Creating CellAssignPipeline object
     cell_typist = CellTypistPipeline(configs_path="config/configs.yaml")
     cell_typist.run_cell_typist()

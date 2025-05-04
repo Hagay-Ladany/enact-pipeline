@@ -283,7 +283,14 @@ class ENACT:
             self.bin_to_cell_method,
             f"{self.cell_annotation_method}_results",
         )
+        self.sargent_results_dir = os.path.join(
+            self.cache_dir,
+            "chunks",
+            self.bin_to_cell_method,
+            "sargent_results",
+        )
         os.makedirs(self.cellannotation_results_dir, exist_ok=True)
+        os.makedirs(self.sargent_results_dir, exist_ok=True)
         os.makedirs(self.cell_chunks_dir, exist_ok=True)
         self.logger = get_logger("ENACT", self.cache_dir)
         self.logger.info(f"<initiate_instance_variables> {self.run_details}")
@@ -1237,9 +1244,11 @@ class ENACT:
         """Runs cell type annotation"""
         ann_method = self.configs["params"]["cell_annotation_method"]
         if ann_method == "sargent":
+            from .sargent import SargentPipeline
+            sargent_obj = SargentPipeline(**self.kwargs)
+            sargent_obj.run_sargent()
             self.logger.info(
-                f"<run_cell_type_annotation> Will launch Sargent separately. "
-                "Please ensure Sargent is installed."
+                f"<run_cell_type_annotation> Successfully ran Sargent on Data."
             )
         elif ann_method == "cellassign":
             from .cellassign import CellAssignPipeline
@@ -1263,7 +1272,7 @@ class ENACT:
         else:
             self.logger.info(
                 "<run_cell_type_annotation> Please select a valid cell annotation "
-                "method. options=['cellassign', 'sargent']"
+                "method. options=['cellassign', 'sargent', 'celltypist']"
             )
 
     def package_results(self):

@@ -113,7 +113,10 @@ cat("Cells filtered. Number of cells:", ncol(gex_filtered), "\\n")
 
 # Create Seurat object and process
 cat("\\nStep 3: Creating Seurat object and processing...\\n")
-seurat_obj <- CreateSeuratObject(counts=gex_filtered) %>%
+
+gex_transposed <- t(gex_filtered)
+
+seurat_obj <- CreateSeuratObject(counts=gex_transposed) %>%
     NormalizeData(., normalization.method="LogNormalize", scale.factor=1e6, verbose=FALSE) %>%
     FindVariableFeatures(., selection.method="vst", nfeatures=2000, verbose=FALSE) %>%
     ScaleData(., do.scale=TRUE, do.center=TRUE, verbose=FALSE) %>%
@@ -127,7 +130,7 @@ cat("Adjacency matrix obtained\\n")
 
 # Run Sargent annotation
 cat("\\nStep 5: Running Sargent annotation...\\n")
-srgnt <- sargentAnnotation(gex=t(gex_filtered), 
+srgnt <- sargentAnnotation(gex=gex_transposed, 
                           gene.sets=gene.sets,
                           adjacent.mtx=adjacent.mtx)
 cat("Sargent annotation completed\\n")
@@ -187,8 +190,6 @@ cat("Results saved\\n")
                     self.logger.info("🧹 Temporary directory deleted.")
                 else:
                     self.logger.info(f"📁 Temporary directory kept at: {temp_dir}")
-
-
 
 if __name__ == "__main__":
     sargent_pipeline = SargentPipeline(configs_path="config/configs.yaml")

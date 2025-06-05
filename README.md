@@ -222,7 +222,7 @@ ENACT users can choose to specify the configurations via one of two ways:
         cell_type_annotation: True                              <---- True to run cell type annotation
     params:
       bin_to_cell_method: "weighted_by_cluster"                 <---- bin-to-cell assignment method. Pick one of ["naive", "weighted_by_area", "weighted_by_gene", "weighted_by_cluster"]
-      cell_annotation_method: "celltypist"                      <---- cell annotation method. Pick one of ["cellassign", "celltypist"]
+      cell_annotation_method: "celltypist"                      <---- cell annotation method. Pick one of ["cellassign", "celltypist", "sargent"]
       cell_typist_model: "Human_Colorectal_Cancer.pkl"          <---- CellTypist model weights to use. Update based on organ of interest if cell_annotation_method is set to "celltypist"
       seg_method: "stardist"                                    <---- cell segmentation method. Stardist is the only option for now
       image_type: "he"                                          <---- image type. Options are ["he", "if"] (for H&E image or IF image, respectively.) 

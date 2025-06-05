@@ -11,7 +11,6 @@ import json
 import shutil
 import scipy.sparse
 from datetime import datetime
-
 from .pipeline import ENACT
 
 
@@ -182,15 +181,22 @@ cat("Results saved\\n")
             results_df = adata.obs.drop(columns=adata.obs["cell_type"].unique().tolist())
             results_df.to_csv(os.path.join(self.cellannotation_results_dir, "merged_results.csv"))
             
-            # Clean up temporary files (ask user)
-            if os.path.exists(temp_dir):
-                user_input = input(f"🧹 Do you want to delete the temporary directory? ({temp_dir}) [y/N]: ").strip().lower()
-                if user_input == "y":
-                    shutil.rmtree(temp_dir)
-                    self.logger.info("🧹 Temporary directory deleted.")
-                else:
-                    self.logger.info(f"📁 Temporary directory kept at: {temp_dir}")
+            # Clean up temporary files
+            
+            # shutil.rmtree(temp_dir)
+
+            self.logger.info("✅ Successfully ran Sargent annotation")
+
+        except Exception as e:
+            self.logger.error(f"🛑 Failed to run Sargent annotation: {e}")
+            # Clean up temporary files even if there's an error
+            #if os.path.exists(temp_dir):
+                #shutil.rmtree(temp_dir)
+            #raise
+
+
 
 if __name__ == "__main__":
     sargent_pipeline = SargentPipeline(configs_path="config/configs.yaml")
-    sargent_pipeline.run_sargent() 
+    sargent_pipeline.run_sargent()
+ 

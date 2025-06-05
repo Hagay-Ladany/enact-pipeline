@@ -89,11 +89,15 @@ library(ggplot2)
 library(dplyr)
 library(sargent)
 library(yaml)
+library(rjson)
+
 
 # Read data
 cat("\\nStep 1: Reading data...\\n")
-gex <- read.csv('{expr_file}', row.names=1)
-gene.sets <- fromJSON('{markers_file}')
+gex <- fread("example_file.csv", data.table = FALSE)
+rownames(gex) <- gex[[1]]
+gex[[1]] <- NULL
+gene.sets <- rjson::fromJSON(file = "{markers_file}")
 cells <- rownames(gex)
 cat("Data read successfully. Dimensions:", dim(gex)[1], "genes x", dim(gex)[2], "cells\\n")
 
@@ -171,16 +175,17 @@ cat("Results saved\\n")
             results_df.to_csv(os.path.join(self.cellannotation_results_dir, "merged_results.csv"))
             
             # Clean up temporary files
-            shutil.rmtree(temp_dir)
+            
+            # shutil.rmtree(temp_dir)
             
             self.logger.info("✅ Successfully ran Sargent annotation")
             
         except Exception as e:
             self.logger.error(f"🛑 Failed to run Sargent annotation: {e}")
             # Clean up temporary files even if there's an error
-            if os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
-            raise
+            #if os.path.exists(temp_dir):
+                #shutil.rmtree(temp_dir)
+            #raise
 
 
 if __name__ == "__main__":

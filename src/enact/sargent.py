@@ -64,10 +64,14 @@ class SargentPipeline(ENACT):
             
             # Save expression matrix to CSV
             expr_file = os.path.join(temp_dir, "expression_matrix.csv")
-            pd.DataFrame(adata.X.toarray(), 
-                        index=adata.obs_names, 
-                        columns=adata.var_names).to_csv(expr_file)
-            
+            if not os.path.exists(expr_file):
+                pd.DataFrame(adata.X.toarray(), 
+                             index=adata.obs_names, 
+                             columns=adata.var_names).to_csv(expr_file)
+                self.logger.info("✅ Wrote expression_matrix.csv")
+            else:
+                self.logger.info("📁 expression_matrix.csv already exists, skipping write")
+                
             # Save cell markers to JSON
             markers_file = os.path.join(temp_dir, "cell_markers.json")
             with open(markers_file, 'w') as f:
@@ -91,13 +95,14 @@ library(sargent)
 library(yaml)
 library(rjson)
 
-
 # Read data
 cat("\\nStep 1: Reading data...\\n")
-gex <- fread("example_file.csv", data.table = FALSE)
+gex <- data.table::fread('{expr_file}')
+gex <- as.data.frame(gex)
 rownames(gex) <- gex[[1]]
 gex[[1]] <- NULL
 gene.sets <- rjson::fromJSON(file = "{markers_file}")
+gene.sets <- lapply(gene.sets, toupper)
 cells <- rownames(gex)
 cat("Data read successfully. Dimensions:", dim(gex)[1], "genes x", dim(gex)[2], "cells\\n")
 
